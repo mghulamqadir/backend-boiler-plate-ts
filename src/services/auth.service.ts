@@ -1,51 +1,38 @@
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { env } from '../config/env.js';
-import type { JwtPayload, UserRole } from '../types/index.js';
 import type { RegisterDto, LoginDto, ChangePasswordDto, UserDto, AuthResult } from '../dtos/index.js';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function signToken(userId: string, email: string, role: UserRole): string {
-  const payload: JwtPayload = { userId, email, role };
-  const secret: Secret = process.env.JWT_SECRET as Secret;
-
-  const expiresIn = env.JWT_EXPIRES_IN as SignOptions["expiresIn"];
-
-  return jwt.sign(payload, secret, { expiresIn });
-}
-
-function toUserDto(doc: {
-  _id: { toString(): string };
-  name: string;
-  email: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-}): UserDto {
-  return {
-    id: doc._id.toString(),
-    name: doc.name,
-    email: doc.email,
-    role: doc.role,
-    isEmailVerified: doc.isEmailVerified,
-  };
-}
+import signToken, { generateEmailVerificationToken, verifyEmailToken, generatePasswordResetToken, verifyPasswordResetToken } from '../utils/jwt.js';
+import { comparePassword, hashPassword, toUserDto } from '../utils/auth.utils.js';
+import { sendEmailVerification, sendPasswordResetEmail } from './email.service.js';
+import { env } from '../config/env.js';
 
 // ─── Service functions ────────────────────────────────────────────────────────
 
 export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
-  const existing = await User.findOne({ email: dto.email }).lean().exec();
+  const { name, email, password, confirmPassword } = dto;
+  const existing = await User.findOne({ email }).lean().exec();
 
   if (existing !== null) {
     throw new AppError('Email already registered', 409);
   }
 
+  if (password !== confirmPassword) {
+    throw new AppError('Passwords do not match', 400);
+  }
+
+  const hashedPassword = await hashPassword(password);
   const user = await User.create({
-    name: dto.name,
-    email: dto.email,
-    password: dto.password,
+    name: name,
+    email: email,
+    password: hashedPassword,
+    isEmailVerified: false,
   });
+
+  // Generate verification token and send email
+  const verificationToken = generateEmailVerificationToken(user._id.toString(), user.email);
+  const verifyUrl = `${env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+  
+  await sendEmailVerification(user.email, verifyUrl);
 
   const token = signToken(user._id.toString(), user.email, user.role);
 
@@ -53,9 +40,10 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
 }
 
 export async function loginUser(dto: LoginDto): Promise<AuthResult> {
-  const user = await User.findOne({ email: dto.email }).select('+password').exec();
+  const { email, password } = dto;
+  const user = await User.findOne({ email }).select('+password').exec();
 
-  if (user === null || !(await user.comparePassword(dto.password))) {
+  if (user === null || !(await comparePassword(password, user.password))) {
     throw new AppError('Invalid email or password', 401);
   }
 
@@ -79,17 +67,81 @@ export async function changePassword(
   dto: ChangePasswordDto,
 ): Promise<void> {
   const user = await User.findById(userId).select('+password').exec();
-
+  const { currentPassword, newPassword } = dto;
   if (user === null) {
     throw new AppError('User not found', 404);
   }
 
-  const isMatch = await user.comparePassword(dto.currentPassword);
+  const isMatch = await comparePassword(currentPassword, user.password);
 
   if (!isMatch) {
     throw new AppError('Current password is incorrect', 400);
   }
 
-  user.password = dto.newPassword;
+  const hashedPassword = await hashPassword(newPassword);
+  user.password = hashedPassword;
   await user.save();
+}
+
+// ─── Email Verification ───────────────────────────────────────────────────────
+
+export async function verifyEmail(token: string): Promise<UserDto> {
+  try {
+    const payload = verifyEmailToken(token);
+
+    const user = await User.findById(payload.userId).exec();
+
+    if (user === null) {
+      throw new AppError('User not found', 404);
+    }
+
+    if (user.isEmailVerified) {
+      throw new AppError('Email already verified', 400);
+    }
+
+    user.isEmailVerified = true;
+    await user.save();
+
+    return toUserDto(user);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Invalid or expired verification token', 401);
+  }
+}
+
+// ─── Password Reset ────────────────────────────────────────────────────────────
+
+export async function forgotPassword(email: string): Promise<void> {
+  const user = await User.findOne({ email }).exec();
+
+  if (user === null) {
+    throw new AppError('You are not registered with this Email', 400);
+  }
+
+  // Generate reset token and send email
+  const resetToken = generatePasswordResetToken(user._id.toString(), user.email);
+  const resetUrl = `${env.CLIENT_URL}/reset-password?token=${resetToken}`;
+
+  await sendPasswordResetEmail(user.email, resetUrl);
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<UserDto> {
+  try {
+    const payload = verifyPasswordResetToken(token);
+
+    const user = await User.findById(payload.userId).exec();
+
+    if (user === null) {
+      throw new AppError('User not found', 404);
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+    user.password = hashedPassword;
+    await user.save();
+
+    return toUserDto(user);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Invalid or expired password reset token', 401);
+  }
 }

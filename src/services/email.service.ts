@@ -1,6 +1,7 @@
 import { BrevoClient } from '@getbrevo/brevo';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { emailTemplates, emailSubjects } from '../templates/emails/email.templates.js';
 
 const brevo = new BrevoClient({ apiKey: env.BREVO_API_KEY });
 
@@ -38,8 +39,8 @@ async function sendEmail(opts: SendEmailOptions): Promise<void> {
 export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   await sendEmail({
     to,
-    subject: 'Welcome!',
-    html: `<p>Hi ${name}, welcome aboard!</p>`,
+    subject: emailSubjects.welcome,
+    html: emailTemplates.welcome(name),
   });
 }
 
@@ -49,12 +50,8 @@ export async function sendPasswordResetEmail(
 ): Promise<void> {
   await sendEmail({
     to,
-    subject: 'Reset your password',
-    html: `
-      <p>You requested a password reset.</p>
-      <p><a href="${resetUrl}">Click here to reset your password</a></p>
-      <p>This link expires in 1 hour. If you didn't request this, please ignore it.</p>
-    `,
+    subject: emailSubjects.passwordReset,
+    html: emailTemplates.passwordReset(resetUrl),
   });
 }
 
@@ -64,10 +61,7 @@ export async function sendEmailVerification(
 ): Promise<void> {
   await sendEmail({
     to,
-    subject: 'Verify your email',
-    html: `
-      <p>Please verify your email address.</p>
-      <p><a href="${verifyUrl}">Click here to verify</a></p>
-    `,
+    subject: emailSubjects.emailVerification,
+    html: emailTemplates.emailVerification(verifyUrl),
   });
 }

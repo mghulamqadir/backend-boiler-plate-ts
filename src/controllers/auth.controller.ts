@@ -7,13 +7,38 @@ import type { RegisterDto, LoginDto, ChangePasswordDto } from '../dtos/index.js'
 export async function register(req: Request, res: Response): Promise<void> {
   const dto = req.body as RegisterDto;
   const result = await authService.registerUser(dto);
-  sendCreated(res, 'Registration successful', result);
+  sendCreated(res, 'Registration successful. Please check your email to verify your account.', result);
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
   const dto = req.body as LoginDto;
   const result = await authService.loginUser(dto);
   sendSuccess(res, 'Login successful', result);
+}
+
+export async function verifyEmail(req: Request, res: Response): Promise<void> {
+  const { token } = req.query;
+  
+  if (!token || typeof token !== 'string') {
+    const error = new Error('Verification token is required');
+    (error as any).statusCode = 400;
+    throw error;
+  }
+
+  const user = await authService.verifyEmail(token);
+  sendSuccess(res, 'Email verified successfully', { user });
+}
+
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  const { email } = req.body;
+  await authService.forgotPassword(email);
+  sendSuccess(res, 'A Reset Password link has been sent successfully to your email');
+}
+
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  const { token, password } = req.body;
+  const user = await authService.resetPassword(token, password);
+  sendSuccess(res, 'Password reset successfully', { user });
 }
 
 export async function getMe(req: Request, res: Response): Promise<void> {
