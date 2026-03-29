@@ -32,7 +32,7 @@ A production-ready, enterprise-grade backend boilerplate built with **Express.js
 - 📁 **File Upload** - AWS S3 integration with image optimization
 - 🖼️ **Image Processing** - Sharp for high-performance image optimization
 - 📊 **API Documentation** - Swagger/OpenAPI documentation UI
-- 📝 **Logging** - Winston logger with HTTP request logging via Morgan
+- 📝 **Logging** - Morgan HTTP request logging with Winston integration
 - ⏰ **Cron Jobs** - Background task scheduling with node-cron
 
 ### Developer Experience
@@ -226,10 +226,10 @@ Joi schema validation on all endpoints
 - Type-safe validation schemas
 
 ### Logging
-Winston-based logging with multiple transports
+Morgan-based HTTP request logging with Winston integration
 - HTTP request logging via Morgan
-- Application error logging
-- Structured log formats
+- Application error logging via Winston
+- Structured log formats with timestamps
 
 ---
 
@@ -263,25 +263,6 @@ This boilerplate includes:
 
 ---
 
-## 🧪 Testing
-
-Testing setup is included but not configured. To add tests:
-
-```bash
-npm install --save-dev jest @types/jest ts-jest
-```
-
-Update `package.json`:
-```json
-{
-  "scripts": {
-    "test": "jest"
-  }
-}
-```
-
----
-
 ## 📦 Dependencies Overview
 
 ### Core
@@ -303,12 +284,10 @@ Update `package.json`:
 ### Validation & Quality
 - **joi** - Schema validation
 - **express-rate-limit** - Rate limiting
-- **express-mongo-sanitize** - Data sanitization
 
 ### Utilities
-- **winston** - Logging
 - **morgan** - HTTP request logging
-- **cron** - Job scheduling
+- **uuid** - Unique identifier generation
 
 ---
 

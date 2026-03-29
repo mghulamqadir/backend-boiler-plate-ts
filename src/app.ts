@@ -27,16 +27,6 @@ app.use(
   }),
 );
 
-// ─── Logging ──────────────────────────────────────────────────────────────────
-
-app.use(
-  morgan('combined', {
-    stream: {
-      write: (msg: string) => logger.http(msg.trim()),
-    },
-  }),
-);
-
 // ─── Webhook routes FIRST (need raw body, before express.json()) ──────────────
 
 app.use('/webhooks', webhookRoutes);
@@ -45,6 +35,16 @@ app.use('/webhooks', webhookRoutes);
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// ─── Logging ──────────────────────────────────────────────────────────────────
+
+app.use(
+  morgan('combined', {
+    stream: {
+      write: (msg: string) => logger.info(msg.trim()),
+    },
+  }),
+);
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 
