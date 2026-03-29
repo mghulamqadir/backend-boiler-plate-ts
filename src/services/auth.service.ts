@@ -3,39 +3,7 @@ import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { env } from '../config/env.js';
 import type { JwtPayload, UserRole } from '../types/index.js';
-
-// ─── DTOs ─────────────────────────────────────────────────────────────────────
-
-export interface RegisterDto {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface ChangePasswordDto {
-  currentPassword: string;
-  newPassword: string;
-}
-
-// ─── Return shapes ────────────────────────────────────────────────────────────
-
-export interface AuthResult {
-  token: string;
-  user: UserDto;
-}
-
-export interface UserDto {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-}
+import type { RegisterDto, LoginDto, ChangePasswordDto, UserDto, AuthResult } from '../dtos/index.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -2,11 +2,7 @@ import type { Request, Response } from 'express';
 import type { AuthRequest } from '../types/index.js';
 import * as authService from '../services/auth.service.js';
 import { sendSuccess, sendCreated } from '../utils/response.js';
-import type {
-  RegisterDto,
-  LoginDto,
-  ChangePasswordDto,
-} from '../services/auth.service.js';
+import type { RegisterDto, LoginDto, ChangePasswordDto } from '../dtos/index.js';
 
 export async function register(req: Request, res: Response): Promise<void> {
   const dto = req.body as RegisterDto;

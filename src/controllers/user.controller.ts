@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import type { AuthRequest } from '../types/index.js';
 import * as userService from '../services/user.service.js';
 import { sendSuccess } from '../utils/response.js';
-import type { UpdateProfileDto, ListUsersQuery } from '../services/user.service.js';
+import type { UpdateProfileDto, ListUsersQuery } from '../dtos/index.js';
 
 export async function getProfile(req: Request, res: Response): Promise<void> {
   const { _id } = (req as AuthRequest).user;

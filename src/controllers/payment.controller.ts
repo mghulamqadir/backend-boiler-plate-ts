@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import type { AuthRequest } from '../types/index.js';
 import * as paymentService from '../services/payment.service.js';
 import { sendCreated, sendSuccess } from '../utils/response.js';
-import type { CreatePaymentIntentDto } from '../services/payment.service.js';
+import type { CreatePaymentIntentDto } from '../dtos/index.js';
 
 export async function createPaymentIntent(req: Request, res: Response): Promise<void> {
   const { _id } = (req as AuthRequest).user;

@@ -2,28 +2,7 @@ import { stripe } from '../config/stripe.js';
 import { Payment } from '../models/Payment.js';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-
-// ─── DTOs / Return shapes ─────────────────────────────────────────────────────
-
-export interface CreatePaymentIntentDto {
-  amount: number;
-  currency: string;
-  metadata?: Record<string, string>;
-}
-
-export interface PaymentIntentResult {
-  clientSecret: string;
-  paymentIntentId: string;
-}
-
-export interface PaymentDto {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  stripePaymentIntentId: string;
-  createdAt: Date;
-}
+import type { CreatePaymentIntentDto, PaymentIntentResult, PaymentDto } from '../dtos/index.js';
 
 // ─── Service functions ────────────────────────────────────────────────────────
 

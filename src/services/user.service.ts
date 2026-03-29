@@ -1,35 +1,7 @@
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import type { UserRole } from '../types/index.js';
-
-// ─── DTOs / Return shapes ─────────────────────────────────────────────────────
-
-export interface UpdateProfileDto {
-  name?: string;
-}
-
-export interface UserListItem {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-  createdAt: Date;
-}
-
-export interface PaginatedUsers {
-  users: UserListItem[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-export interface ListUsersQuery {
-  page: number;
-  limit: number;
-  role?: string;
-  search?: string;
-}
+import type { UpdateProfileDto, UserListItem, PaginatedUsers, ListUsersQuery } from '../dtos/index.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
