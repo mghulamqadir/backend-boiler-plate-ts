@@ -1,6 +1,5 @@
 import { Schema, model } from 'mongoose';
-import type { Document, Model, Types } from 'mongoose';
-import bcrypt from 'bcryptjs';
+import type { Document, Types } from 'mongoose';
 import { UserRole } from '../types/index.js';
 
 // ─── Document interface ───────────────────────────────────────────────────────
@@ -16,17 +15,11 @@ export interface IUser {
   updatedAt: Date;
 }
 
-export interface IUserDocument extends IUser, Document<Types.ObjectId> {
-  comparePassword(candidate: string): Promise<boolean>;
-}
-
-interface IUserModel extends Model<IUserDocument> {
-  findByEmail(email: string): Promise<IUserDocument | null>;
-}
+export interface IUserDocument extends IUser, Document<Types.ObjectId> { }
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-const userSchema = new Schema<IUserDocument, IUserModel>(
+const userSchema = new Schema<IUserDocument>(
   {
     name: {
       type: String,
@@ -62,23 +55,6 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
   { timestamps: true },
 );
 
-// ─── Hooks ────────────────────────────────────────────────────────────────────
 
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password, 12);
-});
 
-// ─── Methods ──────────────────────────────────────────────────────────────────
-
-userSchema.methods['comparePassword'] = function (candidate: string): Promise<boolean> {
-  return bcrypt.compare(candidate, this['password'] as string);
-};
-
-userSchema.statics['findByEmail'] = function (
-  email: string,
-): Promise<IUserDocument | null> {
-  return this.findOne({ email }).exec() as Promise<IUserDocument | null>;
-};
-
-export const User = model<IUserDocument, IUserModel>('User', userSchema);
+export const User = model<IUserDocument>('User', userSchema);
