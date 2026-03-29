@@ -112,7 +112,7 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/backend-boilerplate-ts.git
+   git clone https://github.com/mghulamqadir/backend-boilerplate-ts.git
    cd backend-boilerplate-ts
    ```
 
@@ -358,8 +358,8 @@ PORT=3001 npm run dev
 ## 📞 Support
 
 For issues, questions, or suggestions:
-- Open an [Issue](https://github.com/yourusername/backend-boilerplate-ts/issues)
-- Check [Discussions](https://github.com/yourusername/backend-boilerplate-ts/discussions)
+- Open an [Issue](https://github.com/mghulamqadir/backend-boilerplate-ts/issues)
+- Check [Discussions](https://github.com/mghulamqadir/backend-boilerplate-ts/discussions)
 - Review [Documentation](./docs)
 
 ---
