@@ -49,9 +49,6 @@ export async function createPaymentIntent(
     stripeCustomerId = customer.id;
 
     await User.findByIdAndUpdate(userId, { stripeCustomerId }).exec();
-
-    // Refresh local variable
-    user = { ...user, stripeCustomerId };
   }
 
   const intent = await stripe.paymentIntents.create({

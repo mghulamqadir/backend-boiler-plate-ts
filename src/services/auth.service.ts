@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { env } from '../config/env.js';
@@ -41,7 +41,11 @@ export interface UserDto {
 
 function signToken(userId: string, email: string, role: UserRole): string {
   const payload: JwtPayload = { userId, email, role };
-  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
+  const secret: Secret = process.env.JWT_SECRET as Secret;
+
+  const expiresIn = env.JWT_EXPIRES_IN as SignOptions["expiresIn"];
+
+  return jwt.sign(payload, secret, { expiresIn });
 }
 
 function toUserDto(doc: {
