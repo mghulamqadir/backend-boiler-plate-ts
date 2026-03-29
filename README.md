@@ -192,11 +192,6 @@ JWT-based authentication with secure token generation and verification
 - Password hashing with bcryptjs
 - Protected routes with `authenticate` middleware
 
-```typescript
-// Usage in routes
-app.get('/api/users/profile', authenticate, getUserProfile);
-```
-
 ### Payment Processing
 Stripe integration for secure payment handling
 - Payment creation and processing
@@ -303,12 +298,6 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🆘 Troubleshooting
 
 ### Port already in use
@@ -333,37 +322,3 @@ PORT=3001 npm run dev
 - Ensure your app is publicly accessible
 
 ---
-
-## 📞 Support
-
-For issues, questions, or suggestions:
-- Open an [Issue](https://github.com/mghulamqadir/backend-boilerplate-ts/issues)
-- Check [Discussions](https://github.com/mghulamqadir/backend-boilerplate-ts/discussions)
-- Review [Documentation](./docs)
-
----
-
-## 🎯 Roadmap
-
-- [ ] Add unit and integration tests
-- [ ] Implement GraphQL support
-- [ ] Add Redis caching layer
-- [ ] WebSocket support for real-time features
-- [ ] Kubernetes deployment guide
-- [ ] Docker containerization
-
----
-
-## 📊 Stats
-
-- **Language**: TypeScript
-- **Framework**: Express.js 5.x
-- **Database**: MongoDB
-- **Node Version**: >= 24
-- **Type Safety**: Strict mode enabled
-
----
-
-## ⭐ If you found this useful, please consider starring the repository!
-
-Made with ❤️ by the development community
