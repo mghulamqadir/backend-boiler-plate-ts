@@ -133,7 +133,7 @@ src/
    NODE_ENV=development
    
    # Database
-   MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/dbname
+   MONGODB_URI=mongodb://localhost:27017/your_db_name
    
    # JWT
    JWT_SECRET=your_super_secret_jwt_key
