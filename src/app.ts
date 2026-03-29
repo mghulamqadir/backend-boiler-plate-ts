@@ -20,9 +20,6 @@ const app = express();
 // ─── Security ─────────────────────────────────────────────────────────────────
 
 app.use(helmet());
-// Note: express-mongo-sanitize is incompatible with Express 5.x
-// Mongoose schemas provide built-in validation protection
-// app.use(mongoSanitize());
 app.use(
   cors({
     origin: env.CLIENT_URL,
