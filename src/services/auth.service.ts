@@ -14,19 +14,15 @@ import signToken, {
   generatePasswordResetToken,
   verifyPasswordResetToken,
 } from '../utils/jwt.js';
-import { comparePassword, hashPassword, toUserDto } from '../utils/auth.utils.js';
+import {
+  assertPasswordsMatch,
+  buildClientTokenUrl,
+  comparePassword,
+  hashPassword,
+  toUserDto,
+} from '../utils/user.helpers.js';
 import { sendEmailVerification, sendPasswordResetEmail } from './email.service.js';
 import { env } from '../config/env.js';
-
-function assertPasswordsMatch(password: string, confirmPassword: string): void {
-  if (password !== confirmPassword) {
-    throw new AppError('Passwords do not match', 400);
-  }
-}
-
-function createClientUrl(path: string, token: string): string {
-  return `${env.CLIENT_URL}/${path}?token=${token}`;
-}
 
 async function getUserByIdOrThrow(userId: string): Promise<IUserDocument> {
   const user = await User.findById(userId).exec();
@@ -96,7 +92,7 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
   });
 
   const verificationToken = generateEmailVerificationToken(user._id.toString(), user.email);
-  const verifyUrl = createClientUrl('verify-email', verificationToken);
+  const verifyUrl = buildClientTokenUrl(env.CLIENT_URL, 'verify-email', verificationToken);
 
   await sendEmailVerification(user.email, verifyUrl);
 
@@ -168,7 +164,7 @@ export async function forgotPassword(email: string): Promise<void> {
   }
 
   const resetToken = generatePasswordResetToken(user._id.toString(), user.email);
-  const resetUrl = createClientUrl('reset-password', resetToken);
+  const resetUrl = buildClientTokenUrl(env.CLIENT_URL, 'reset-password', resetToken);
 
   await sendPasswordResetEmail(user.email, resetUrl);
 }
