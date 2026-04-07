@@ -8,7 +8,11 @@ import { AppError } from '../utils/AppError.js';
 export async function register(req: Request, res: Response): Promise<void> {
   const dto = req.body as RegisterDto;
   const result = await authService.registerUser(dto);
-  sendCreated(res, 'Registration successful. Please check your email to verify your account.', result);
+  sendCreated(
+    res,
+    'Registration successful. Please check your email to verify your account.',
+    result
+  );
 }
 
 export async function login(req: Request, res: Response): Promise<void> {

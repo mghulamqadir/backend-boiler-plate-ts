@@ -16,7 +16,7 @@ export interface UploadResult {
 
 export async function uploadImage(
   file: NonNullable<Request['file']>,
-  folder = 'uploads',
+  folder = 'uploads'
 ): Promise<UploadResult> {
   // Normalise to WebP and cap dimensions at 1200px wide
   const processed = await sharp(file.buffer)
@@ -32,7 +32,7 @@ export async function uploadImage(
       Key: key,
       Body: processed,
       ContentType: 'image/webp',
-    }),
+    })
   );
 
   const url = `https://${env.AWS_S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
@@ -45,6 +45,6 @@ export async function deleteImage(key: string): Promise<void> {
     new DeleteObjectCommand({
       Bucket: env.AWS_S3_BUCKET,
       Key: key,
-    }),
+    })
   );
 }

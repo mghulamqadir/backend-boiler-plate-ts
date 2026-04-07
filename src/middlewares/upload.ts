@@ -11,7 +11,7 @@ const storage = multer.memoryStorage();
 function imageFileFilter(
   _req: Request,
   file: NonNullable<Request['file']>,
-  cb: FileFilterCallback,
+  cb: FileFilterCallback
 ): void {
   if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
     cb(null, true);

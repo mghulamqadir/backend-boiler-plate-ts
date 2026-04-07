@@ -36,10 +36,7 @@ async function sendEmail(opts: SendEmailOptions): Promise<void> {
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
-export async function sendPasswordResetEmail(
-  to: string,
-  resetUrl: string,
-): Promise<void> {
+export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
   await sendEmail({
     to,
     subject: emailSubjects.passwordReset,
@@ -47,10 +44,7 @@ export async function sendPasswordResetEmail(
   });
 }
 
-export async function sendEmailVerification(
-  to: string,
-  verifyUrl: string,
-): Promise<void> {
+export async function sendEmailVerification(to: string, verifyUrl: string): Promise<void> {
   await sendEmail({
     to,
     subject: emailSubjects.emailVerification,

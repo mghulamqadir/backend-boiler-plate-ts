@@ -1,7 +1,12 @@
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import type { UserRole } from '../types/index.js';
-import type { UpdateProfileDto, UserListItem, PaginatedUsers, ListUsersQuery } from '../dtos/index.js';
+import type {
+  UpdateProfileDto,
+  UserListItem,
+  PaginatedUsers,
+  ListUsersQuery,
+} from '../dtos/index.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,10 +40,7 @@ export async function getUserById(userId: string): Promise<UserListItem> {
   return toListItem(user);
 }
 
-export async function updateProfile(
-  userId: string,
-  dto: UpdateProfileDto,
-): Promise<UserListItem> {
+export async function updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserListItem> {
   const user = await User.findByIdAndUpdate(userId, dto, {
     new: true,
     runValidators: true,

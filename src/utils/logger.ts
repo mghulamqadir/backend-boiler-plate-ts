@@ -14,7 +14,7 @@ export const logger = createLogger({
   format: format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     format.errors({ stack: true }),
-    isProduction ? format.json() : customFormat,
+    isProduction ? format.json() : customFormat
   ),
   transports: [new transports.Console()],
 });

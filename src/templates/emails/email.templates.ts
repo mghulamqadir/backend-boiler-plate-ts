@@ -1,7 +1,7 @@
 // ─── Email Templates ──────────────────────────────────────────────────────────
 
 export const emailTemplates = {
-    welcome: (name: string): string => `
+  welcome: (name: string): string => `
     <!DOCTYPE html>
     <html>
       <head>
@@ -29,7 +29,7 @@ export const emailTemplates = {
     </html>
   `,
 
-    passwordReset: (resetUrl: string): string => `
+  passwordReset: (resetUrl: string): string => `
     <!DOCTYPE html>
     <html>
       <head>
@@ -66,7 +66,7 @@ export const emailTemplates = {
     </html>
   `,
 
-    emailVerification: (verifyUrl: string): string => `
+  emailVerification: (verifyUrl: string): string => `
     <!DOCTYPE html>
     <html>
       <head>
@@ -101,7 +101,7 @@ export const emailTemplates = {
 };
 
 export const emailSubjects = {
-    welcome: 'Welcome to our platform!',
-    passwordReset: 'Reset your password',
-    emailVerification: 'Verify your email address',
+  welcome: 'Welcome to our platform!',
+  passwordReset: 'Reset your password',
+  emailVerification: 'Verify your email address',
 };

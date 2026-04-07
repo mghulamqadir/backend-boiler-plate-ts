@@ -12,7 +12,7 @@ router.use(authenticate);
 router.post(
   '/create-intent',
   validate(createPaymentIntentSchema),
-  asyncHandler(paymentController.createPaymentIntent),
+  asyncHandler(paymentController.createPaymentIntent)
 );
 
 router.get('/my-payments', asyncHandler(paymentController.getMyPayments));
