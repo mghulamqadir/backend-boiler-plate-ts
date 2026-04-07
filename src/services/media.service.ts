@@ -1,4 +1,5 @@
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import type { Request } from 'express';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { s3 } from '../config/s3.js';
@@ -14,7 +15,7 @@ export interface UploadResult {
 // ─── Service functions ────────────────────────────────────────────────────────
 
 export async function uploadImage(
-  file: Express.Multer.File,
+  file: NonNullable<Request['file']>,
   folder = 'uploads',
 ): Promise<UploadResult> {
   // Normalise to WebP and cap dimensions at 1200px wide

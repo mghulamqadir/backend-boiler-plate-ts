@@ -36,14 +36,6 @@ async function sendEmail(opts: SendEmailOptions): Promise<void> {
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
-export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
-  await sendEmail({
-    to,
-    subject: emailSubjects.welcome,
-    html: emailTemplates.welcome(name),
-  });
-}
-
 export async function sendPasswordResetEmail(
   to: string,
   resetUrl: string,

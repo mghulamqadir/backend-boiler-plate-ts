@@ -9,52 +9,67 @@ import {
   handlePaymentFailed,
 } from '../services/payment.service.js';
 
-export async function stripeWebhookHandler(req: Request, res: Response): Promise<void> {
-  const sig = req.headers['stripe-signature'];
+type StripeEventHandler = (event: Stripe.Event) => Promise<void>;
 
-  if (typeof sig !== 'string') {
+function getStripeSignatureOrThrow(req: Request): string {
+  const signature = req.headers['stripe-signature'];
+
+  if (typeof signature !== 'string') {
     throw new AppError('Missing Stripe signature header', 400);
   }
 
-  // req.body must be the raw Buffer — this route must use express.raw() not express.json()
-  let event: Stripe.Event;
+  return signature;
+}
 
+function constructStripeEvent(req: Request, signature: string): Stripe.Event {
   try {
-    event = stripe.webhooks.constructEvent(
+    return stripe.webhooks.constructEvent(
       req.body as Buffer,
-      sig,
+      signature,
       env.STRIPE_WEBHOOK_SECRET,
     );
   } catch {
     throw new AppError('Webhook signature verification failed', 400);
   }
+}
 
-  logger.info(`Stripe event received: ${event.type}`);
-
-  switch (event.type) {
-    case 'payment_intent.succeeded': {
-      const intent = event.data.object as Stripe.PaymentIntent;
+function createStripeEventHandlers(): Record<string, StripeEventHandler> {
+  return {
+    'payment_intent.succeeded': async (stripeEvent) => {
+      const intent = stripeEvent.data.object as Stripe.PaymentIntent;
       await handlePaymentSucceeded(intent.id);
-      break;
-    }
-
-    case 'payment_intent.payment_failed': {
-      const intent = event.data.object as Stripe.PaymentIntent;
+    },
+    'payment_intent.payment_failed': async (stripeEvent) => {
+      const intent = stripeEvent.data.object as Stripe.PaymentIntent;
       await handlePaymentFailed(intent.id);
-      break;
-    }
+    },
+    'customer.subscription.deleted': async (stripeEvent) => {
+      const subscription = stripeEvent.data.object as Stripe.Subscription;
+      logger.info('Subscription deleted', { subscriptionId: subscription.id });
+    },
+    'customer.subscription.updated': async (stripeEvent) => {
+      const subscription = stripeEvent.data.object as Stripe.Subscription;
+      logger.info('Subscription updated', { subscriptionId: subscription.id });
+    },
+  };
+}
 
-    case 'customer.subscription.deleted':
-    case 'customer.subscription.updated': {
-      const sub = event.data.object as Stripe.Subscription;
-      logger.info(`Subscription event: ${event.type}`, { subscriptionId: sub.id });
-      // Add subscription handling logic here
-      break;
-    }
+async function handleStripeEvent(event: Stripe.Event): Promise<void> {
+  const handler = createStripeEventHandlers()[event.type];
 
-    default:
-      logger.info(`Unhandled Stripe event type: ${event.type}`);
+  if (handler === undefined) {
+    logger.info(`Unhandled Stripe event type: ${event.type}`);
+    return;
   }
 
+  await handler(event);
+}
+
+export async function stripeWebhookHandler(req: Request, res: Response): Promise<void> {
+  const signature = getStripeSignatureOrThrow(req);
+  const event = constructStripeEvent(req, signature);
+
+  logger.info(`Stripe event received: ${event.type}`);
+  await handleStripeEvent(event);
   res.status(200).json({ received: true });
 }

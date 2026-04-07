@@ -3,6 +3,7 @@ import type { AuthRequest } from '../types/index.js';
 import * as authService from '../services/auth.service.js';
 import { sendSuccess, sendCreated } from '../utils/response.js';
 import type { RegisterDto, LoginDto, ChangePasswordDto } from '../dtos/index.js';
+import { AppError } from '../utils/AppError.js';
 
 export async function register(req: Request, res: Response): Promise<void> {
   const dto = req.body as RegisterDto;
@@ -18,11 +19,9 @@ export async function login(req: Request, res: Response): Promise<void> {
 
 export async function verifyEmail(req: Request, res: Response): Promise<void> {
   const { token } = req.query;
-  
+
   if (!token || typeof token !== 'string') {
-    const error = new Error('Verification token is required');
-    (error as any).statusCode = 400;
-    throw error;
+    throw new AppError('Verification token is required', 400);
   }
 
   const user = await authService.verifyEmail(token);
