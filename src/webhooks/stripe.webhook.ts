@@ -4,10 +4,7 @@ import { stripe } from '../config/stripe.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
-import {
-  handlePaymentSucceeded,
-  handlePaymentFailed,
-} from '../services/payment.service.js';
+import { handlePaymentSucceeded, handlePaymentFailed } from '../services/payment.service.js';
 
 type StripeEventHandler = (event: Stripe.Event) => Promise<void>;
 
@@ -23,11 +20,7 @@ function getStripeSignatureOrThrow(req: Request): string {
 
 function constructStripeEvent(req: Request, signature: string): Stripe.Event {
   try {
-    return stripe.webhooks.constructEvent(
-      req.body as Buffer,
-      signature,
-      env.STRIPE_WEBHOOK_SECRET,
-    );
+    return stripe.webhooks.constructEvent(req.body as Buffer, signature, env.STRIPE_WEBHOOK_SECRET);
   } catch {
     throw new AppError('Webhook signature verification failed', 400);
   }

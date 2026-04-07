@@ -1,8 +1,19 @@
 import { User } from '../models/User.js';
 import type { IUserDocument } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import type { RegisterDto, LoginDto, ChangePasswordDto, UserDto, AuthResult } from '../dtos/index.js';
-import signToken, { generateEmailVerificationToken, verifyEmailToken, generatePasswordResetToken, verifyPasswordResetToken } from '../utils/jwt.js';
+import type {
+  RegisterDto,
+  LoginDto,
+  ChangePasswordDto,
+  UserDto,
+  AuthResult,
+} from '../dtos/index.js';
+import signToken, {
+  generateEmailVerificationToken,
+  verifyEmailToken,
+  generatePasswordResetToken,
+  verifyPasswordResetToken,
+} from '../utils/jwt.js';
 import { comparePassword, hashPassword, toUserDto } from '../utils/auth.utils.js';
 import { sendEmailVerification, sendPasswordResetEmail } from './email.service.js';
 import { env } from '../config/env.js';
@@ -51,7 +62,7 @@ async function runTokenAction<T>(
   token: string,
   verifyToken: (value: string) => { userId: string },
   onSuccess: (user: Awaited<ReturnType<typeof getUserByIdOrThrow>>) => Promise<T>,
-  invalidMessage: string,
+  invalidMessage: string
 ): Promise<T> {
   try {
     const payload = verifyToken(token);
@@ -112,10 +123,7 @@ export async function getMe(userId: string): Promise<UserDto> {
   return toUserDto(user);
 }
 
-export async function changePassword(
-  userId: string,
-  dto: ChangePasswordDto,
-): Promise<void> {
+export async function changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
   const { currentPassword, newPassword } = dto;
   const user = await getUserWithPasswordByIdOrThrow(userId);
 
@@ -146,7 +154,7 @@ export async function verifyEmail(token: string): Promise<UserDto> {
 
       return toUserDto(user);
     },
-    'Invalid or expired verification token',
+    'Invalid or expired verification token'
   );
 }
 
@@ -176,6 +184,6 @@ export async function resetPassword(token: string, newPassword: string): Promise
 
       return toUserDto(user);
     },
-    'Invalid or expired password reset token',
+    'Invalid or expired password reset token'
   );
 }

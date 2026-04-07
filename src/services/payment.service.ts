@@ -34,7 +34,7 @@ async function ensureStripeCustomerId(userId: string): Promise<string> {
 async function createPendingPaymentRecord(
   userId: string,
   dto: CreatePaymentIntentDto,
-  paymentIntentId: string,
+  paymentIntentId: string
 ): Promise<void> {
   await Payment.create({
     userId,
@@ -48,7 +48,7 @@ async function createPendingPaymentRecord(
 
 export async function createPaymentIntent(
   userId: string,
-  dto: CreatePaymentIntentDto,
+  dto: CreatePaymentIntentDto
 ): Promise<PaymentIntentResult> {
   const stripeCustomerId = await ensureStripeCustomerId(userId);
 
@@ -88,13 +88,13 @@ export async function getPaymentsByUser(userId: string): Promise<PaymentDto[]> {
 export async function handlePaymentSucceeded(paymentIntentId: string): Promise<void> {
   await Payment.findOneAndUpdate(
     { stripePaymentIntentId: paymentIntentId },
-    { status: 'succeeded' },
+    { status: 'succeeded' }
   ).exec();
 }
 
 export async function handlePaymentFailed(paymentIntentId: string): Promise<void> {
   await Payment.findOneAndUpdate(
     { stripePaymentIntentId: paymentIntentId },
-    { status: 'failed' },
+    { status: 'failed' }
   ).exec();
 }

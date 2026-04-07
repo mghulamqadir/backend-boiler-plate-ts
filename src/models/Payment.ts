@@ -51,7 +51,7 @@ const paymentSchema = new Schema<IPaymentDocument, IPaymentModel>(
       of: String,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export const Payment = model<IPaymentDocument, IPaymentModel>('Payment', paymentSchema);

@@ -15,7 +15,7 @@ export interface IUser {
   updatedAt: Date;
 }
 
-export interface IUserDocument extends IUser, Document<Types.ObjectId> { }
+export interface IUserDocument extends IUser, Document<Types.ObjectId> {}
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -52,9 +52,7 @@ const userSchema = new Schema<IUserDocument>(
       default: false,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
-
-
 
 export const User = model<IUserDocument>('User', userSchema);
