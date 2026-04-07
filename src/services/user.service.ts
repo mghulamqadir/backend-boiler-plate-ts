@@ -1,32 +1,12 @@
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import type { UserRole } from '../types/index.js';
 import type {
   UpdateProfileDto,
   UserListItem,
   PaginatedUsers,
   ListUsersQuery,
 } from '../dtos/index.js';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function toListItem(doc: {
-  _id: { toString(): string };
-  name: string;
-  email: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-  createdAt: Date;
-}): UserListItem {
-  return {
-    id: doc._id.toString(),
-    name: doc.name,
-    email: doc.email,
-    role: doc.role,
-    isEmailVerified: doc.isEmailVerified,
-    createdAt: doc.createdAt,
-  };
-}
+import { toUserListItem } from '../utils/user.helpers.js';
 
 // ─── Service functions ────────────────────────────────────────────────────────
 
@@ -37,7 +17,7 @@ export async function getUserById(userId: string): Promise<UserListItem> {
     throw new AppError('User not found', 404);
   }
 
-  return toListItem(user);
+  return toUserListItem(user);
 }
 
 export async function updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserListItem> {
@@ -52,7 +32,7 @@ export async function updateProfile(userId: string, dto: UpdateProfileDto): Prom
     throw new AppError('User not found', 404);
   }
 
-  return toListItem(user);
+  return toUserListItem(user);
 }
 
 export async function listUsers(query: ListUsersQuery): Promise<PaginatedUsers> {
@@ -78,7 +58,7 @@ export async function listUsers(query: ListUsersQuery): Promise<PaginatedUsers> 
   ]);
 
   return {
-    users: users.map(toListItem),
+    users: users.map(toUserListItem),
     total,
     page,
     totalPages: Math.ceil(total / limit),
