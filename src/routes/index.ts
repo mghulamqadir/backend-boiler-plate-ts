@@ -7,9 +7,9 @@ import { authLimiter } from '../utils/rateLimit.js';
 import { Router } from 'express';
 
 const router = Router();
-router.use('/api/auth', authLimiter, authRoutes);
-router.use('/api/users', userRoutes);
-router.use('/api/payments', paymentRoutes);
-router.use('/api/media', mediaRoutes);
+router.use('/auth', authLimiter, authRoutes);
+router.use('/users', userRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/media', mediaRoutes);
 
 export default router;

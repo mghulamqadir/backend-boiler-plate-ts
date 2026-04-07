@@ -1,4 +1,5 @@
-import jwt, { Secret, SignOptions, verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import type { Secret, SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import type { JwtPayload, UserRole } from '../types/index.js';
 
@@ -29,7 +30,7 @@ export function generateEmailVerificationToken(userId: string, email: string): s
 
 export function verifyEmailToken(token: string): EmailVerificationPayload {
     const secret: Secret = process.env.JWT_SECRET as Secret;
-    return verify(token, secret) as EmailVerificationPayload;
+    return jwt.verify(token, secret) as EmailVerificationPayload;
 }
 
 // ─── Password Reset Token ───────────────────────────────────────────────────
@@ -50,7 +51,7 @@ export function generatePasswordResetToken(userId: string, email: string): strin
 
 export function verifyPasswordResetToken(token: string): PasswordResetPayload {
     const secret: Secret = process.env.JWT_SECRET as Secret;
-    return verify(token, secret) as PasswordResetPayload;
+    return jwt.verify(token, secret) as PasswordResetPayload;
 }
 
 export default signToken;

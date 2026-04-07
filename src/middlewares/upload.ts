@@ -1,5 +1,5 @@
-import multer from 'multer';
 import type { Request } from 'express';
+import multer from 'multer';
 import type { FileFilterCallback } from 'multer';
 import { AppError } from '../utils/AppError.js';
 
@@ -10,7 +10,7 @@ const storage = multer.memoryStorage();
 
 function imageFileFilter(
   _req: Request,
-  file: Express.Multer.File,
+  file: NonNullable<Request['file']>,
   cb: FileFilterCallback,
 ): void {
   if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {

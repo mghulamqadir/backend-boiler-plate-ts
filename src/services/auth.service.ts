@@ -1,4 +1,5 @@
 import { User } from '../models/User.js';
+import type { IUserDocument } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import type { RegisterDto, LoginDto, ChangePasswordDto, UserDto, AuthResult } from '../dtos/index.js';
 import signToken, { generateEmailVerificationToken, verifyEmailToken, generatePasswordResetToken, verifyPasswordResetToken } from '../utils/jwt.js';
@@ -6,7 +7,64 @@ import { comparePassword, hashPassword, toUserDto } from '../utils/auth.utils.js
 import { sendEmailVerification, sendPasswordResetEmail } from './email.service.js';
 import { env } from '../config/env.js';
 
-// ─── Service functions ────────────────────────────────────────────────────────
+function assertPasswordsMatch(password: string, confirmPassword: string): void {
+  if (password !== confirmPassword) {
+    throw new AppError('Passwords do not match', 400);
+  }
+}
+
+function createClientUrl(path: string, token: string): string {
+  return `${env.CLIENT_URL}/${path}?token=${token}`;
+}
+
+async function getUserByIdOrThrow(userId: string): Promise<IUserDocument> {
+  const user = await User.findById(userId).exec();
+
+  if (user === null) {
+    throw new AppError('User not found', 404);
+  }
+
+  return user;
+}
+
+async function getLeanUserByIdOrThrow(userId: string) {
+  const user = await User.findById(userId).lean().exec();
+
+  if (user === null) {
+    throw new AppError('User not found', 404);
+  }
+
+  return user;
+}
+
+async function getUserWithPasswordByIdOrThrow(userId: string) {
+  const user = await User.findById(userId).select('+password').exec();
+
+  if (user === null) {
+    throw new AppError('User not found', 404);
+  }
+
+  return user;
+}
+
+async function runTokenAction<T>(
+  token: string,
+  verifyToken: (value: string) => { userId: string },
+  onSuccess: (user: Awaited<ReturnType<typeof getUserByIdOrThrow>>) => Promise<T>,
+  invalidMessage: string,
+): Promise<T> {
+  try {
+    const payload = verifyToken(token);
+    const user = await getUserByIdOrThrow(payload.userId);
+    return await onSuccess(user);
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(invalidMessage, 401);
+  }
+}
 
 export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
   const { name, email, password, confirmPassword } = dto;
@@ -16,9 +74,7 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
     throw new AppError('Email already registered', 409);
   }
 
-  if (password !== confirmPassword) {
-    throw new AppError('Passwords do not match', 400);
-  }
+  assertPasswordsMatch(password, confirmPassword);
 
   const hashedPassword = await hashPassword(password);
   const user = await User.create({
@@ -28,10 +84,9 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
     isEmailVerified: false,
   });
 
-  // Generate verification token and send email
   const verificationToken = generateEmailVerificationToken(user._id.toString(), user.email);
-  const verifyUrl = `${env.CLIENT_URL}/verify-email?token=${verificationToken}`;
-  
+  const verifyUrl = createClientUrl('verify-email', verificationToken);
+
   await sendEmailVerification(user.email, verifyUrl);
 
   const token = signToken(user._id.toString(), user.email, user.role);
@@ -53,12 +108,7 @@ export async function loginUser(dto: LoginDto): Promise<AuthResult> {
 }
 
 export async function getMe(userId: string): Promise<UserDto> {
-  const user = await User.findById(userId).lean().exec();
-
-  if (user === null) {
-    throw new AppError('User not found', 404);
-  }
-
+  const user = await getLeanUserByIdOrThrow(userId);
   return toUserDto(user);
 }
 
@@ -66,11 +116,8 @@ export async function changePassword(
   userId: string,
   dto: ChangePasswordDto,
 ): Promise<void> {
-  const user = await User.findById(userId).select('+password').exec();
   const { currentPassword, newPassword } = dto;
-  if (user === null) {
-    throw new AppError('User not found', 404);
-  }
+  const user = await getUserWithPasswordByIdOrThrow(userId);
 
   const isMatch = await comparePassword(currentPassword, user.password);
 
@@ -86,27 +133,21 @@ export async function changePassword(
 // ─── Email Verification ───────────────────────────────────────────────────────
 
 export async function verifyEmail(token: string): Promise<UserDto> {
-  try {
-    const payload = verifyEmailToken(token);
+  return runTokenAction(
+    token,
+    verifyEmailToken,
+    async (user) => {
+      if (user.isEmailVerified) {
+        throw new AppError('Email already verified', 400);
+      }
 
-    const user = await User.findById(payload.userId).exec();
+      user.isEmailVerified = true;
+      await user.save();
 
-    if (user === null) {
-      throw new AppError('User not found', 404);
-    }
-
-    if (user.isEmailVerified) {
-      throw new AppError('Email already verified', 400);
-    }
-
-    user.isEmailVerified = true;
-    await user.save();
-
-    return toUserDto(user);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Invalid or expired verification token', 401);
-  }
+      return toUserDto(user);
+    },
+    'Invalid or expired verification token',
+  );
 }
 
 // ─── Password Reset ────────────────────────────────────────────────────────────
@@ -118,30 +159,23 @@ export async function forgotPassword(email: string): Promise<void> {
     throw new AppError('You are not registered with this Email', 400);
   }
 
-  // Generate reset token and send email
   const resetToken = generatePasswordResetToken(user._id.toString(), user.email);
-  const resetUrl = `${env.CLIENT_URL}/reset-password?token=${resetToken}`;
+  const resetUrl = createClientUrl('reset-password', resetToken);
 
   await sendPasswordResetEmail(user.email, resetUrl);
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<UserDto> {
-  try {
-    const payload = verifyPasswordResetToken(token);
+  return runTokenAction(
+    token,
+    verifyPasswordResetToken,
+    async (user) => {
+      const hashedPassword = await hashPassword(newPassword);
+      user.password = hashedPassword;
+      await user.save();
 
-    const user = await User.findById(payload.userId).exec();
-
-    if (user === null) {
-      throw new AppError('User not found', 404);
-    }
-
-    const hashedPassword = await hashPassword(newPassword);
-    user.password = hashedPassword;
-    await user.save();
-
-    return toUserDto(user);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Invalid or expired password reset token', 401);
-  }
+      return toUserDto(user);
+    },
+    'Invalid or expired password reset token',
+  );
 }

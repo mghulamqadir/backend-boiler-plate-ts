@@ -4,7 +4,7 @@ import { env } from '../config/env.js';
 const isProduction = env.NODE_ENV === 'production';
 
 // Custom format for development
-const customFormat = format.printf(({ level, message, timestamp }) => {
+const customFormat = format.printf(({ level, message }) => {
   const levelUpper = level.toUpperCase();
   return `[${levelUpper}] ${message}`;
 });

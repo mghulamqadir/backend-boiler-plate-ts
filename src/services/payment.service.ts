@@ -4,31 +4,53 @@ import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import type { CreatePaymentIntentDto, PaymentIntentResult, PaymentDto } from '../dtos/index.js';
 
-// ─── Service functions ────────────────────────────────────────────────────────
-
-export async function createPaymentIntent(
-  userId: string,
-  dto: CreatePaymentIntentDto,
-): Promise<PaymentIntentResult> {
-  // Ensure or create a Stripe customer so receipts and subscriptions work
-  let user = await User.findById(userId).lean().exec();
+async function getUserOrThrow(userId: string) {
+  const user = await User.findById(userId).lean().exec();
 
   if (user === null) {
     throw new AppError('User not found', 404);
   }
 
-  let stripeCustomerId = user.stripeCustomerId;
+  return user;
+}
 
-  if (stripeCustomerId === undefined) {
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: user.name,
-    });
+async function ensureStripeCustomerId(userId: string): Promise<string> {
+  const user = await getUserOrThrow(userId);
 
-    stripeCustomerId = customer.id;
-
-    await User.findByIdAndUpdate(userId, { stripeCustomerId }).exec();
+  if (user.stripeCustomerId !== undefined) {
+    return user.stripeCustomerId;
   }
+
+  const customer = await stripe.customers.create({
+    email: user.email,
+    name: user.name,
+  });
+
+  await User.findByIdAndUpdate(userId, { stripeCustomerId: customer.id }).exec();
+
+  return customer.id;
+}
+
+async function createPendingPaymentRecord(
+  userId: string,
+  dto: CreatePaymentIntentDto,
+  paymentIntentId: string,
+): Promise<void> {
+  await Payment.create({
+    userId,
+    stripePaymentIntentId: paymentIntentId,
+    amount: dto.amount,
+    currency: dto.currency,
+    status: 'pending',
+    metadata: dto.metadata,
+  });
+}
+
+export async function createPaymentIntent(
+  userId: string,
+  dto: CreatePaymentIntentDto,
+): Promise<PaymentIntentResult> {
+  const stripeCustomerId = await ensureStripeCustomerId(userId);
 
   const intent = await stripe.paymentIntents.create({
     amount: dto.amount,
@@ -41,15 +63,7 @@ export async function createPaymentIntent(
     throw new AppError('Failed to create payment intent', 500);
   }
 
-  // Create a pending payment record immediately
-  await Payment.create({
-    userId,
-    stripePaymentIntentId: intent.id,
-    amount: dto.amount,
-    currency: dto.currency,
-    status: 'pending',
-    metadata: dto.metadata,
-  });
+  await createPendingPaymentRecord(userId, dto, intent.id);
 
   return {
     clientSecret: intent.client_secret,
