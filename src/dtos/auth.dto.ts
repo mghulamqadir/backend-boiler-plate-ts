@@ -14,6 +14,10 @@ export interface LoginDto {
   password: string;
 }
 
+export interface GoogleLoginDto {
+  credential: string;
+}
+
 export interface ChangePasswordDto {
   currentPassword: string;
   newPassword: string;

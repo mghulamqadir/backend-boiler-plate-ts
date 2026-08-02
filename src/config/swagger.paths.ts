@@ -32,7 +32,26 @@ export const swaggerPaths = {
       },
       responses: {
         200: { description: 'Login successful' },
-        401: { description: 'Invalid credentials' },
+        401: { description: 'Invalid credentials or Google-only account' },
+      },
+    },
+  },
+  '/auth/google': {
+    post: {
+      tags: ['Auth'],
+      summary: 'Sign in with Google',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/GoogleLoginBody' },
+          },
+        },
+      },
+      responses: {
+        200: { description: 'Google login successful' },
+        401: { description: 'Invalid Google credential' },
+        409: { description: 'Email is linked to another Google account' },
       },
     },
   },

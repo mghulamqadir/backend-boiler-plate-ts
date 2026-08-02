@@ -43,6 +43,8 @@ export interface AppEnv {
   MONGO_URI: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
   AWS_REGION: string;

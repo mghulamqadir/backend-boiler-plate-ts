@@ -14,6 +14,10 @@ export const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
+export const googleLoginSchema = Joi.object({
+  credential: Joi.string().required(),
+});
+
 export const forgotPasswordSchema = Joi.object({
   email: Joi.string().email().lowercase().required(),
 });

@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError.js';
 import type {
   RegisterDto,
   LoginDto,
+  GoogleLoginDto,
   ChangePasswordDto,
   UserDto,
   AuthResult,
@@ -23,6 +24,7 @@ import {
 } from '../utils/user.helpers.js';
 import { sendEmailVerification, sendPasswordResetEmail } from './email.service.js';
 import { env } from '../config/env.js';
+import { googleClient } from '../config/google.js';
 
 async function getUserByIdOrThrow(userId: string): Promise<IUserDocument> {
   const user = await User.findById(userId).exec();
@@ -104,13 +106,75 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
 export async function loginUser(dto: LoginDto): Promise<AuthResult> {
   const { email, password } = dto;
   const user = await User.findOne({ email }).select('+password').exec();
+  const { password: userPassword } = user || {};
+  if (user === null) {
+    throw new AppError('Invalid email or password', 401);
+  }
 
-  if (user === null || !(await comparePassword(password, user.password))) {
+  if (user.password === undefined) {
+    throw new AppError('This account uses Google Sign-In. Please continue with Google.', 401);
+  }
+
+  if (!(await comparePassword(password, user.password))) {
     throw new AppError('Invalid email or password', 401);
   }
 
   const token = signToken(user._id.toString(), user.email, user.role);
 
+  return { token, user: toUserDto(user) };
+}
+
+export async function loginWithGoogle(dto: GoogleLoginDto): Promise<AuthResult> {
+  let googleProfile: { googleId: string; email: string; name: string };
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: dto.credential,
+      audience: env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (
+      payload?.sub === undefined ||
+      payload.email === undefined ||
+      payload.email_verified !== true
+    ) {
+      throw new Error('Google account does not have a verified email');
+    }
+
+    googleProfile = {
+      googleId: payload.sub,
+      email: payload.email.toLowerCase(),
+      name: payload.name?.trim() || payload.email.split('@')[0] || 'Google User',
+    };
+  } catch {
+    throw new AppError('Invalid Google credential', 401);
+  }
+
+  let user = await User.findOne({
+    $or: [{ googleId: googleProfile.googleId }, { email: googleProfile.email }],
+  })
+    .select('+googleId')
+    .exec();
+
+  if (user === null) {
+    user = await User.create({
+      name: googleProfile.name,
+      email: googleProfile.email,
+      googleId: googleProfile.googleId,
+      isEmailVerified: true,
+    });
+  } else if (user.googleId === undefined) {
+    // A verified Google ID token proves ownership of this email, so it is safe
+    // to link an existing local account without asking for its password.
+    user.googleId = googleProfile.googleId;
+    user.isEmailVerified = true;
+    await user.save();
+  } else if (user.googleId !== googleProfile.googleId) {
+    throw new AppError('This email is linked to another Google account', 409);
+  }
+
+  const token = signToken(user._id.toString(), user.email, user.role);
   return { token, user: toUserDto(user) };
 }
 
@@ -123,7 +187,8 @@ export async function changePassword(userId: string, dto: ChangePasswordDto): Pr
   const { currentPassword, newPassword } = dto;
   const user = await getUserWithPasswordByIdOrThrow(userId);
 
-  const isMatch = await comparePassword(currentPassword, user.password);
+  const isMatch =
+    user.password !== undefined && (await comparePassword(currentPassword, user.password));
 
   if (!isMatch) {
     throw new AppError('Current password is incorrect', 400);

@@ -24,4 +24,11 @@ export const swaggerSchemas = {
       password: { type: 'string' },
     },
   },
+  GoogleLoginBody: {
+    type: 'object',
+    required: ['credential'],
+    properties: {
+      credential: { type: 'string', description: 'Google Identity Services ID credential' },
+    },
+  },
 } as const;
