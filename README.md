@@ -109,6 +109,7 @@ src/
 - **Node.js** >= 24
 - **npm** or **yarn**
 - **MongoDB** (local or Atlas URI)
+- **Google OAuth 2.0 Web client** (for Google Sign-In)
 - **AWS S3** credentials (for file uploads)
 - **Stripe** API keys
 - **Brevo** API key (for emails)
@@ -147,6 +148,10 @@ src/
    # JWT
    JWT_SECRET=your_super_secret_jwt_key
    JWT_EXPIRES_IN=7d
+
+   # Google OAuth 2.0 Web client
+   GOOGLE_CLIENT_ID=your_google_oauth_client_id
+   GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 
    # AWS S3
    AWS_REGION=us-east-1
@@ -198,11 +203,35 @@ The server will start at `http://localhost:3000`
 
 ### Authentication
 
-JWT-based authentication with secure token generation and verification
+JWT-based authentication with email/password and Google Identity Services support.
 
 - User registration and login
+- Signup and login with Google using the same endpoint
+- Automatic linking when Google returns an existing verified email
+- Passwordless accounts for users who originally sign up with Google
 - Password hashing with bcryptjs
 - Protected routes with `authenticate` middleware
+
+#### Google signup and login
+
+Use the same endpoint for Google signup and login:
+
+```http
+POST /api/auth/google
+Content-Type: application/json
+
+{
+  "credential": "GOOGLE_ID_CREDENTIAL"
+}
+```
+
+- New users are created without a password.
+- Existing Google users are logged in without duplication.
+- A matching verified email is linked automatically.
+- Google-only accounts cannot use password login.
+- A conflicting Google account returns HTTP `409`.
+
+The response contains an application JWT. Send it as `Authorization: Bearer <token>` to protected endpoints such as `GET /api/auth/me`. Refresh tokens are not currently implemented.
 
 ### Payment Processing
 
