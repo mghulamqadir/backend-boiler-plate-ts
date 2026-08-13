@@ -77,7 +77,8 @@ async function runTokenAction<T>(
 
 export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
   const { name, email, password, confirmPassword } = dto;
-  const existing = await User.findOne({ email }).lean().exec();
+  const normalizedEmail = email.toLowerCase();
+  const existing = await User.findOne({ email: normalizedEmail }).lean().exec();
 
   if (existing !== null) {
     throw new AppError('Email already registered', 409);
@@ -88,7 +89,7 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
   const hashedPassword = await hashPassword(password);
   const user = await User.create({
     name: name,
-    email: email,
+    email: normalizedEmail,
     password: hashedPassword,
     isEmailVerified: false,
   });
@@ -105,7 +106,8 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
 
 export async function loginUser(dto: LoginDto): Promise<AuthResult> {
   const { email, password } = dto;
-  const user = await User.findOne({ email }).select('+password').exec();
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).select('+password').exec();
   const { password: userPassword } = user || {};
   if (user === null) {
     throw new AppError('Invalid email or password', 401);
@@ -222,7 +224,8 @@ export async function verifyEmail(token: string): Promise<UserDto> {
 // ─── Password Reset ────────────────────────────────────────────────────────────
 
 export async function forgotPassword(email: string): Promise<void> {
-  const user = await User.findOne({ email }).exec();
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).exec();
 
   if (user === null) {
     throw new AppError('You are not registered with this Email', 400);
